@@ -1,26 +1,48 @@
 import socket
 
-def isACK(client_socket):
-    try:
-        client_socket.settimeout(1.0)
-        response = client_socket.recv(1024).decode()
-        if response == "ACK":
-            print("\n[ACK received]")
-            return True
-        else:
-            print("\n[NAK received]")
-            return False
-    except socket.timeout:
-        print("[TIMEOUT] waiting ACK or NAK.")
-        return False
+def make_pkt(data):
+    checksum = sum(bytearray(data.encode())) % 256
+    checksum_string = f"{checksum:04d}"
+    return f"{data}{checksum_string}"
+
+
+def parse_pkt(packet):
+    checksumlen = 4
+    data = packet[:-checksumlen]
+    checksum = int(packet[-checksumlen:])
+    return data, checksum
+
+def verify_checksum(data, rcv_checksum):
+    checksum = sum(bytearray(data.encode())) % 256
+    return checksum == rcv_checksum
 
 def isNAK(client_socket, data):
     print("[RESENDING]")
     send(client_socket, data)
 
+def isACK(client_socket):
+    try:
+        client_socket.settimeout(1.0)
+        packet = client_socket.recv(1024).decode()
+        response, rcv_checksum = parse_pkt(packet)
+        if verify_checksum(response, rcv_checksum):
+            if response == "ACK":
+                print("\n[ACK received]")
+                return True
+            elif response == "NAK":
+                print("\n[NAK received]")
+                return False
+        else:
+            print("\n[CHECKSUM ERROR] Data corrupted")
+            return False
+    except socket.timeout:
+        print("[TIMEOUT] waiting ACK or NAK.")
+        return False
+
 def send(client_socket, data):
     #AQUI DEVE ESTRUTURA O PACOTE ANTES DE ENVIAR PARA O SERVIDOR
-    client_socket.sendall(data.encode())
+    packet = make_pkt(data)
+    client_socket.sendall(packet.encode())
     if not isACK(client_socket):
         isNAK(client_socket, data)
 
@@ -30,7 +52,7 @@ def interface(client_socket):
         print("[2] Exit\n")
         choice = input(">>> ")
         if choice == '1':
-            data = input("[MESSAGE]\n\n>>> ")
+            data = input("\n[MESSAGE]\n>>> ")
             send(client_socket, data)
         elif choice == '2':
             print("\n[EXIT] Closing connection...")

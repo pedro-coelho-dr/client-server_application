@@ -1,15 +1,37 @@
 import socket
 
+def make_pkt(data):
+    checksum = sum(bytearray(data.encode())) % 256
+    checksum_string = f"{checksum:04d}"
+    return f"{data}{checksum_string}"
+
+
 def send(client_connection, data):
-    client_connection.sendall(data.encode())
+    packet = make_pkt(data)
+    client_connection.sendall(packet.encode())
+
+def parse_pkt(packet):
+    checksumlen = 4
+    data = packet[:-checksumlen]
+    checksum = int(packet[-checksumlen:])
+    return data, checksum
+
+def verify_checksum(data, rcv_checksum):
+    checksum = sum(bytearray(data.encode())) % 256
+    return checksum == rcv_checksum
 
 def listening(client_connection):
     while True:
         #AQUI DEVE ESTRUTURAR O PACOTE RECEBIDO DO CLIENTE
-        data = client_connection.recv(1024).decode()
-        if data:
-            print(f"\n{data}\n")
-            send(client_connection, "ACK")
+        packet = client_connection.recv(1024).decode()
+        if packet:
+            data, rcv_checksum = parse_pkt(packet)
+            if verify_checksum(data, rcv_checksum):
+                print(f"\n[DATA RECEIVED]: {data}\n")
+                send(client_connection, "ACK")
+            else:
+                print("\n[CHECKSUM ERROR] Data corrupted")
+                send(client_connection, "NAK") 
         else:
             print("[DISCONNECTED BY CLIENT]\n\n")
             break
@@ -54,7 +76,6 @@ def start_server(host='localhost', port=65432):
 
         while True:
             client_connection, client_address = server_socket.accept()
-            print(f"[HANDSHAKE]")
             with client_connection:
                 if handshake(client_connection):
                     print(f"[CONNECTED] {client_address}")
