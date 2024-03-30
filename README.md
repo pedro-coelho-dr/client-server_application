@@ -18,11 +18,10 @@
 
   ```bash
 
-  run-server:
-	osascript -e 'tell app "Terminal" to do script "cd SeuCaminho/InfraDeComunicacao && python3 server/server.py"'
+  
+	'"cd SeuCaminho/InfraDeComunicacao && python3 server/server.py"
 
-  run-client:
-	osascript -e 'tell app "Terminal" to do script "cd SeuCaminho/InfraDeComunicacao && python3 client/client.py"'
+  "cd SeuCaminho/InfraDeComunicacao && python3 client/client.py"
 
   ```
 
