@@ -13,11 +13,16 @@ def send(client_connection, data):
 def parse_pkt(packet):
     checksumlen = 4
     data = packet[:-checksumlen]
-    checksum = int(packet[-checksumlen:])
+    try:
+        checksum = int(packet[-checksumlen:])
+    except ValueError:
+        print(f"[CHECKSUM] Corrupted")
+        checksum = None
     return data, checksum
 
 def verify_checksum(data, rcv_checksum):
     checksum = sum(bytearray(data.encode())) % 256
+    print(f"[CHECKSUM] {checksum} == {rcv_checksum}")
     return checksum == rcv_checksum
 
 def listening(client_connection):
@@ -27,7 +32,7 @@ def listening(client_connection):
         if packet:
             data, rcv_checksum = parse_pkt(packet)
             if verify_checksum(data, rcv_checksum):
-                print(f"\n[DATA RECEIVED]: {data}\n")
+                print(f"[DATA RECEIVED]: {data}\n\n")
                 send(client_connection, "ACK")
             else:
                 print("\n[CHECKSUM ERROR] Data corrupted")
@@ -78,7 +83,7 @@ def start_server(host='localhost', port=65432):
             client_connection, client_address = server_socket.accept()
             with client_connection:
                 if handshake(client_connection):
-                    print(f"[CONNECTED] {client_address}")
+                    print(f"[CONNECTED] {client_address}\n\n")
                     listening(client_connection)
                 else:
                     client_connection.close()
