@@ -10,9 +10,9 @@
 
 </p>
 
-## InfraDeComunicacao
+# InfraDeComunicacao
 
-# Como executar o programa:
+## Como executar o programa:
 
 - Va para o arquivo Makefile e troque o caminho para que direcione ao aquivo InfraDeComunicacao na sua máquina
 
