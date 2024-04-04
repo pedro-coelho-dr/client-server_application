@@ -1,59 +1,69 @@
 import socket
 
-def make_pkt(data):
-    checksum = sum(bytearray(data.encode())) % 256
+def make_pkt(data, sequence_number):
+    checksum = sum(bytearray(data.encode() + str(sequence_number).encode())) % 256
     checksum_string = f"{checksum:04d}"
-    return f"{data}{checksum_string}"
-
+    return f"{data}:{sequence_number}:{checksum_string}"
 
 def parse_pkt(packet):
-    checksumlen = 4
-    data = packet[:-checksumlen]
-    checksum = int(packet[-checksumlen:])
-    return data, checksum
+    parts = packet.rsplit(':', 2)
+    if len(parts) == 3:
+        data, seqnum, rcv_checksum = parts
+        seqnum = int(seqnum)
+        rcv_checksum = int(rcv_checksum)
+        return data, seqnum, rcv_checksum
+    else:
+        raise ValueError("\n[PARSE ERROR] Invalid packet format")
 
-def verify_checksum(data, rcv_checksum):
-    checksum = sum(bytearray(data.encode())) % 256
+def verify_checksum(data, sequence_number, rcv_checksum):
+    checksum = sum(bytearray(data.encode() + str(sequence_number).encode())) % 256
+    print(f"[CHECKSUM] {checksum} == {rcv_checksum}")
     return checksum == rcv_checksum
 
-def isNAK(client_socket, data):
+def isNAK(client_socket, data, sequence_number):
     print("[RESENDING]")
-    send(client_socket, data)
+    send(client_socket, data, sequence_number)
 
-def isACK(client_socket):
+def isACK(client_socket, sequence_number):
     try:
         client_socket.settimeout(1.0)
         packet = client_socket.recv(1024).decode()
-        response, rcv_checksum = parse_pkt(packet)
-        if verify_checksum(response, rcv_checksum):
-            if response == "ACK":
-                print("\n[ACK received]")
-                return True
-            elif response == "NAK":
-                print("\n[NAK received]")
+        if packet:
+            response, rcv_seq_num, rcv_checksum = parse_pkt(packet)
+            if verify_checksum(response, rcv_seq_num, rcv_checksum):
+                if response == "ACK" and rcv_seq_num == sequence_number:
+                    print("\n[ACK received]")
+                    return True
+                elif response == "NAK":
+                    print("\n[NAK received]")
+                    return False
+            else:
+                print("\n[CHECKSUM ERROR] Data corrupted")
                 return False
         else:
-            print("\n[CHECKSUM ERROR] Data corrupted")
+            print("[NO RESPONSE FROM SERVER]")
             return False
     except socket.timeout:
         print("[TIMEOUT] waiting ACK or NAK.")
         return False
+    except ConnectionAbortedError as e:
+        print("[CONNECTION ABORTED] Connection was aborted by the host.")
+        return False
 
-def send(client_socket, data):
-    #AQUI DEVE ESTRUTURA O PACOTE ANTES DE ENVIAR PARA O SERVIDOR
-    packet = make_pkt(data)
+def send(client_socket, data, sequence_number):
+    packet = make_pkt(data, sequence_number)
     client_socket.sendall(packet.encode())
-    if not isACK(client_socket):
-        isNAK(client_socket, data)
 
 def interface(client_socket):
+    sequence_number = 0
     while True:
         print("\n[1] Send message")
         print("[2] Exit\n")
         choice = input(">>> ")
         if choice == '1':
             data = input("\n[MESSAGE]\n>>> ")
-            send(client_socket, data)
+            send(client_socket, data, sequence_number)
+            sequence_number += 1
         elif choice == '2':
             print("\n[EXIT] Closing connection...")
             break
