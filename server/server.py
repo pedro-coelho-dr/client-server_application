@@ -1,45 +1,59 @@
 import socket
 
-def make_pkt(data):
-    checksum = sum(bytearray(data.encode())) % 256
+# ACK NAK
+def make_pkt(data, sequence_number):
+    sequence_string = f"{sequence_number:04d}"
+    checksum = sum(bytearray((data + sequence_string).encode())) % 256
     checksum_string = f"{checksum:04d}"
-    return f"{data}{checksum_string}"
+    return f"{data}{sequence_string}{checksum_string}"
 
-
-def send(client_connection, data):
-    packet = make_pkt(data)
+def send_ack_nak(client_connection, ack_nak, sequence_number):
+    packet = make_pkt(ack_nak, sequence_number)
     client_connection.sendall(packet.encode())
+    print(f"[SENT] {ack_nak} for Seq: {sequence_number}\n\n")
+
+# LISTENING
 
 def parse_pkt(packet):
-    checksumlen = 4
-    data = packet[:-checksumlen]
-    try:
-        checksum = int(packet[-checksumlen:])
-    except ValueError:
-        print(f"[CHECKSUM] Corrupted")
-        checksum = None
-    return data, checksum
+    if len(packet) < 12:
+        raise ValueError("[PARSE ERROR]")
+    data = packet[:-12]
+    seqnum = int(packet[-12:-8])
+    last_seqnum = int(packet[-8:-4])
+    rcv_checksum = int(packet[-4:])
+    return data, seqnum, last_seqnum, rcv_checksum
 
-def verify_checksum(data, rcv_checksum):
-    checksum = sum(bytearray(data.encode())) % 256
+def verify_checksum(data, sequence_number, last_sequence_number, rcv_checksum):
+    sequence_string = f"{sequence_number:04d}"
+    last_seq_string = f"{last_sequence_number:04d}"
+    checksum = sum(bytearray((data + sequence_string + last_seq_string).encode())) % 256
     print(f"[CHECKSUM] {checksum} == {rcv_checksum}")
     return checksum == rcv_checksum
 
 def listening(client_connection):
-    while True:
-        #AQUI DEVE ESTRUTURAR O PACOTE RECEBIDO DO CLIENTE
-        packet = client_connection.recv(1024).decode()
-        if packet:
-            data, rcv_checksum = parse_pkt(packet)
-            if verify_checksum(data, rcv_checksum):
-                print(f"[DATA RECEIVED]: {data}\n\n")
-                send(client_connection, "ACK")
+    try:
+        full_message = ""
+        while True:
+            packet = client_connection.recv(1024).decode()
+            if packet:
+                data, seqnum, last_seqnum, rcv_checksum = parse_pkt(packet)
+                print(f"[RECEIVED] Data: '{data}', Last: {last_seqnum}, Seq: {seqnum}")
+                if verify_checksum(data, seqnum, last_seqnum, rcv_checksum):
+                    full_message += data
+                    send_ack_nak(client_connection, "ACK", seqnum)
+                else:
+                    send_ack_nak(client_connection, "NAK", seqnum)
+                    print(f"[ERROR] Checksum mismatch for Seq: {seqnum}. NAK sent.")
+                if seqnum == last_seqnum:
+                    print(f"[FULL MESSAGE] {full_message}")
+                    full_message= ""
             else:
-                print("\n[CHECKSUM ERROR] Data corrupted")
-                send(client_connection, "NAK") 
-        else:
-            print("[DISCONNECTED BY CLIENT]\n\n")
-            break
+                print("[DISCONNECTED] Client has disconnected.")
+                return
+    except Exception as e:
+        print(f"[EXCEPTION] {str(e)}")
+
+### CONNECTION
 
 def handshake(client_connection):
     attempts = 0

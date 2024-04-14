@@ -1,74 +1,87 @@
 import socket
 
-def make_pkt(data, sequence_number):
-    checksum = sum(bytearray(data.encode() + str(sequence_number).encode())) % 256
-    checksum_string = f"{checksum:04d}"
-    return f"{data}:{sequence_number}:{checksum_string}"
+# ACK-NAK
 
 def parse_pkt(packet):
-    parts = packet.rsplit(':', 2)
-    if len(parts) == 3:
-        data, seqnum, rcv_checksum = parts
-        seqnum = int(seqnum)
-        rcv_checksum = int(rcv_checksum)
-        return data, seqnum, rcv_checksum
-    else:
-        raise ValueError("\n[PARSE ERROR] Invalid packet format")
+    if len(packet) < 8:
+        raise ValueError("[PARSE ERROR]")
+    data = packet[:-8]
+    seqnum = int(packet[-8:-4])
+    rcv_checksum = int(packet[-4:])
+    return data, seqnum, rcv_checksum
 
 def verify_checksum(data, sequence_number, rcv_checksum):
-    checksum = sum(bytearray(data.encode() + str(sequence_number).encode())) % 256
+    sequence_string = f"{sequence_number:04d}"
+    checksum = sum(bytearray((data + sequence_string).encode())) % 256
     print(f"[CHECKSUM] {checksum} == {rcv_checksum}")
     return checksum == rcv_checksum
 
-def isNAK(client_socket, data, sequence_number):
-    print("[RESENDING]")
-    send(client_socket, data, sequence_number)
-
-def isACK(client_socket, sequence_number):
+def receive_ack_nak(client_socket, timeout=2.0):
+    client_socket.settimeout(timeout)
     try:
-        client_socket.settimeout(1.0)
         packet = client_socket.recv(1024).decode()
         if packet:
-            response, rcv_seq_num, rcv_checksum = parse_pkt(packet)
-            if verify_checksum(response, rcv_seq_num, rcv_checksum):
-                if response == "ACK" and rcv_seq_num == sequence_number:
-                    print("\n[ACK received]")
-                    return True
-                elif response == "NAK":
-                    print("\n[NAK received]")
-                    return False
-            else:
-                print("\n[CHECKSUM ERROR] Data corrupted")
-                return False
-        else:
-            print("[NO RESPONSE FROM SERVER]")
-            return False
+            data, seqnum, rcv_checksum = parse_pkt(packet)
+            valid = verify_checksum(data, seqnum, rcv_checksum)
+            print(f"[RECEIVED {data}] Seq: {seqnum}, Valid: {valid}")
+            return seqnum, data == "ACK"
     except socket.timeout:
-        print("[TIMEOUT] waiting ACK or NAK.")
-        return False
-    except ConnectionAbortedError as e:
-        print("[CONNECTION ABORTED] Connection was aborted by the host.")
-        return False
+        print("[TIMEOUT] No ACK or NAK received.")
+    finally:
+        client_socket.settimeout(None)
+    return None, False
 
-def send(client_socket, data, sequence_number):
-    packet = make_pkt(data, sequence_number)
+# PACKET SEND
+
+def make_pkt(data, sequence_number, last_sequence_number):
+    sequence_string = f"{sequence_number:04d}"
+    last_seq_string = f"{last_sequence_number:04d}"
+    checksum = sum(bytearray((data + sequence_string + last_seq_string).encode())) % 256
+    checksum_string = f"{checksum:04d}"
+    return f"{data}{sequence_string}{last_seq_string}{checksum_string}"
+
+
+def send(client_socket, data, sequence_number, last_sequence_number):
+    packet = make_pkt(data, sequence_number, last_sequence_number)
     client_socket.sendall(packet.encode())
+    print(f"\n[SENT] Data: '{data}', Seq: {sequence_number}, Last: {last_sequence_number}")
+
+
+def send_batch(client_socket):
+    sequence_number = 1
+    data = input("\nEnter data: ")
+    packets = [data[i:i+5] for i in range(0, len(data), 5)]
+    last_sequence_number = len(packets)
+    for i, packet in enumerate(packets):
+        send(client_socket, packet, sequence_number, last_sequence_number)
+        _, ack_received = receive_ack_nak(client_socket)
+        while not ack_received:
+            print(f"[RESENDING] Packet Sequence: {sequence_number}")
+            send(client_socket, packet, sequence_number, last_sequence_number)
+            _, ack_received = receive_ack_nak(client_socket)
+        sequence_number += 1
+
+## INTERFACE
 
 def interface(client_socket):
-    sequence_number = 0
+    menu = """
+1) Send batch
+2) Exit
+    """
     while True:
-        print("\n[1] Send message")
-        print("[2] Exit\n")
-        choice = input(">>> ")
+        print(menu)
+        choice = input("Choose an option:\n>>> ")
         if choice == '1':
-            data = input("\n[MESSAGE]\n>>> ")
-            send(client_socket, data, sequence_number)
-            sequence_number += 1
+            send_batch(client_socket)
         elif choice == '2':
-            print("\n[EXIT] Closing connection...")
+            print("[EXITING] Closing connection...")
+            client_socket.close()
             break
         else:
-            print("[INVALID CHOICE]")
+            print("[INVALID OPTION] Please try again.")
+
+
+#### CONNECTIONG
 
 def handshake(client_socket):
     attempts = 0
@@ -104,6 +117,7 @@ def connection(server_host='localhost', server_port=65432):
             print(f"[CONNECTED] {server_host}:{server_port} / {peer_address[0]}:{peer_address[1]} / {local_address[0]}:{local_address[1]}")
             interface(client_socket)
         else:
+            print("[CONNECTION FAILED] Handshake unsuccessful.")
             client_socket.close()
 
 if __name__ == "__main__":
