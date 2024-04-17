@@ -39,22 +39,24 @@ def receive_ack_nak(client_socket, timeout=2.0):
 
 # PACKET SEND
 
-def make_pkt(data, sequence_number, last_sequence_number):
+def make_pkt(data, sequence_number, last_sequence_number, corruput=False):
     sequence_string = f"{sequence_number:04d}"
     last_seq_string = f"{last_sequence_number:04d}"
     padded_data = data.ljust(5)
     checksum = sum(bytearray((padded_data + sequence_string + last_seq_string).encode())) % 256
+    if(corruput):
+        checksum = checksum+1
     checksum_string = f"{checksum:04d}"
     return f"{padded_data}{sequence_string}{last_seq_string}{checksum_string}"
 
 
-def send(client_socket, data, sequence_number, last_sequence_number):
-    packet = make_pkt(data, sequence_number, last_sequence_number)
+def send(client_socket, data, sequence_number, last_sequence_number,corrupt=False):
+    packet = make_pkt(data, sequence_number, last_sequence_number,corrupt)
     client_socket.sendall(packet.encode())
     print(f"\n[SENT] Data: '{data}', Seq: {sequence_number}, Last: {last_sequence_number}")
 
 
-def send_batch(client_socket):
+def send_batch(client_socket, corrupt=False, drop=False):
     sequence_number = 1
     data = input("\nEnter message: ")
     packets = [data[i:i+5] for i in range(0, len(data), 5)]
@@ -62,9 +64,19 @@ def send_batch(client_socket):
     MAX_RETRIES = 3
     for packet in packets:
         retries = 0
-        send(client_socket, packet, sequence_number, last_sequence_number)
-        _, response = receive_ack_nak(client_socket)
-
+        # SIMULATE STATE
+        if(drop):
+            #DROP
+            send(client_socket, packet, sequence_number, last_sequence_number,corrupt)
+            response = "TEST"
+        if(corrupt):
+            send(client_socket, packet, sequence_number, last_sequence_number,corrupt)
+            _, response = receive_ack_nak(client_socket)
+        # NORMAL STATE
+        else:
+            send(client_socket, packet, sequence_number, last_sequence_number)
+            _, response = receive_ack_nak(client_socket)
+            
         while response != "ACK" and retries < MAX_RETRIES:
             if response == "NAK":
                 print(f"[NAK RECEIVED] Resending Packet Seq: {sequence_number}")
@@ -78,6 +90,9 @@ def send_batch(client_socket):
         if retries == MAX_RETRIES and response != "ACK":
             print(f"[ERROR] Maximum resend: {sequence_number}.")
         sequence_number += 1
+        
+        if response == "TEST":
+            print(f"TESTE resived: {sequence_number}.")
 
 
 def send_batch_group(client_socket):
@@ -120,7 +135,9 @@ def interface(client_socket):
     menu = """
 1) Send batch (individual confirmation)
 2) Send batch (group confirmation)
-3) Exit
+3) Simulate a corrupted package
+4) Simulete a droped packge
+5) Exit
     """
     while True:
         print(menu)
@@ -129,7 +146,12 @@ def interface(client_socket):
             send_batch(client_socket)
         if choice == '2':
             send_batch_group(client_socket)
-        elif choice == '3':
+        if choice == '3':
+            send_batch(client_socket,True,False)
+        if choice == '4':
+            #DROP
+            send_batch(client_socket,False,True)
+        elif choice == '5':
             print("[EXITING] Closing connection...")
             client_socket.close()
             break
