@@ -23,13 +23,19 @@ def receive_ack_nak(client_socket, timeout=2.0):
         if packet:
             data, seqnum, rcv_checksum = parse_pkt(packet)
             valid = verify_checksum(data, seqnum, rcv_checksum)
-            print(f"[RECEIVED {data}] Seq: {seqnum}, Valid: {valid}")
-            return seqnum, data == "ACK"
+            if valid:
+                print(f"[RECEIVED] Data: '{data}', Seq: {seqnum}, Valid checksum.")
+                if data == "ACK":
+                    return seqnum, "ACK"
+                elif data == "NAK":
+                    return seqnum, "NAK"
+            else:
+                print("[ERROR] Invalid checksum.")
     except socket.timeout:
-        print("[TIMEOUT] No ACK or NAK received.")
+        print("[TIMEOUT] No ACK or NAK")
     finally:
         client_socket.settimeout(None)
-    return None, False
+    return None, "NO RESPONSE"
 
 # PACKET SEND
 
@@ -52,28 +58,48 @@ def send_batch(client_socket):
     data = input("\nEnter data: ")
     packets = [data[i:i+5] for i in range(0, len(data), 5)]
     last_sequence_number = len(packets)
-    for i, packet in enumerate(packets):
+    MAX_RETRIES = 3
+    for packet in packets:
+        retries = 0
         send(client_socket, packet, sequence_number, last_sequence_number)
-        _, ack_received = receive_ack_nak(client_socket)
-        while not ack_received:
-            print(f"[RESENDING] Packet Sequence: {sequence_number}")
+        _, response = receive_ack_nak(client_socket)
+
+        while response != "ACK" and retries < MAX_RETRIES:
+            if response == "NAK":
+                print(f"[NAK RECEIVED] Resending Packet Sequence: {sequence_number}")
+            else:
+                print(f"[RESENDING] Packet Sequence: {sequence_number}, Attempt: {retries+1}")
+            
             send(client_socket, packet, sequence_number, last_sequence_number)
-            _, ack_received = receive_ack_nak(client_socket)
+            _, response = receive_ack_nak(client_socket)
+            retries += 1
+
+        if retries == MAX_RETRIES and response != "ACK":
+            print(f"[ERROR] Maximum resend: {sequence_number}.")
         sequence_number += 1
+
+
+
+def send_batch_group(client_socket):
+    return
+
 
 ## INTERFACE
 
 def interface(client_socket):
     menu = """
-1) Send batch
-2) Exit
+1) Send batch (individual confirmation)
+2) Send batch (group confirmation)
+3) Exit
     """
     while True:
         print(menu)
         choice = input("Choose an option:\n>>> ")
         if choice == '1':
             send_batch(client_socket)
-        elif choice == '2':
+        if choice == '2':
+            send_batch_group(client_socket)
+        elif choice == '':
             print("[EXITING] Closing connection...")
             client_socket.close()
             break

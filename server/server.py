@@ -53,6 +53,30 @@ def listening(client_connection):
     except Exception as e:
         print(f"[EXCEPTION] {str(e)}")
 
+def listening_group(client_connection):
+    return
+
+def server_interface(client_connection):
+    menu = """
+1) Individual Packet Confirmation
+2) Group Packet Confirmation
+3) Exit
+    """
+    while True:
+        print(menu)
+        choice = input("Choose an option:\n>>> ")
+        if choice == '1':
+            listening(client_connection)
+        elif choice == '2':
+            listening_group(client_connection)
+        elif choice == '3':
+            print("[EXITING] Closing connection...")
+            client_connection.close()
+            break
+        else:
+            print("[INVALID OPTION] Please try again.")
+
+
 ### CONNECTION
 
 def handshake(client_connection):
@@ -98,7 +122,7 @@ def start_server(host='localhost', port=65432):
             with client_connection:
                 if handshake(client_connection):
                     print(f"[CONNECTED] {client_address}\n\n")
-                    listening(client_connection)
+                    server_interface(client_connection)
                 else:
                     client_connection.close()
 
