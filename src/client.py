@@ -131,8 +131,8 @@ def interface(client_socket):
     menu = """
 1) Send batch (individual confirmation)
 2) Send batch (group confirmation)
-3) Simulate a corrupted package
-4) Simulate a dropped package
+3) Simulate a corrupted package (individual)
+4) Simulate a dropped package (individual)
 5) Exit
     """
     while True:
