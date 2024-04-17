@@ -15,7 +15,7 @@ def send_ack_nak(client_connection, ack_nak, sequence_number):
 # LISTENING
 
 def parse_pkt(packet):
-    if len(packet) < 12:
+    if len(packet) != 17:
         raise ValueError("[PARSE ERROR]")
     data = packet[:-12]
     seqnum = int(packet[-12:-8])
@@ -43,24 +43,69 @@ def listening(client_connection):
                     send_ack_nak(client_connection, "ACK", seqnum)
                 else:
                     send_ack_nak(client_connection, "NAK", seqnum)
-                    print(f"[ERROR] Checksum mismatch for Seq: {seqnum}. NAK sent.")
+                    print(f"[ERROR] Checksum Seq: {seqnum}. NAK sent.")
                 if seqnum == last_seqnum:
                     print(f"[FULL MESSAGE] {full_message}")
                     full_message= ""
             else:
-                print("[DISCONNECTED] Client has disconnected.")
+                print("[DISCONNECTED] Client disconnected.")
                 return
     except Exception as e:
         print(f"[EXCEPTION] {str(e)}")
 
 def listening_group(client_connection):
-    return
+    try:
+        full_message = ""
+        buffer = ""
+        packets_to_ack = []
+
+        while True:
+            data = client_connection.recv(1024).decode()
+            if not data:
+                print("[DISCONNECTED] Client disconnected.")
+                break
+            buffer += data
+
+            while len(buffer) >= 17:
+                packet = buffer[:17]
+                buffer = buffer[17:]
+                
+                try:
+                    data, seqnum, last_seqnum, rcv_checksum = parse_pkt(packet)
+                except ValueError as e:
+                    print(f"[EXCEPTION] {str(e)}")
+                    continue
+
+                print(f"[RECEIVED] Data: '{data}', Last: {last_seqnum}, Seq: {seqnum}")
+                if verify_checksum(data, seqnum, last_seqnum, rcv_checksum):
+                    packets_to_ack.append((seqnum, True))
+                    full_message += data
+                else:
+                    packets_to_ack.append((seqnum, False))
+                    print(f"[ERROR] Checksum Seq: {seqnum}. NAK.")
+
+                if len(packets_to_ack) == 5 or seqnum == last_seqnum:
+                    if all(ack for _, ack in packets_to_ack):
+                        send_ack_nak(client_connection, "ACK", packets_to_ack[-1][0])
+                        print("[GROUP ACK SENT]")
+                    else:
+                        send_ack_nak(client_connection, "NAK", packets_to_ack[0][0])
+                        print("[GROUP NAK SENT]")
+                    packets_to_ack = []
+                    if seqnum == last_seqnum:
+                        print(f"[FULL MESSAGE] {full_message}")
+                        full_message = ""
+                    
+    except Exception as e:
+        print(f"[EXCEPTION] {str(e)}")
+
+# INTERFACE
+
 
 def server_interface(client_connection):
     menu = """
-1) Individual Packet Confirmation
-2) Group Packet Confirmation
-3) Exit
+1) Individual Confirmation
+2) Group Confirmation
     """
     while True:
         print(menu)
@@ -69,15 +114,11 @@ def server_interface(client_connection):
             listening(client_connection)
         elif choice == '2':
             listening_group(client_connection)
-        elif choice == '3':
-            print("[EXITING] Closing connection...")
-            client_connection.close()
-            break
         else:
-            print("[INVALID OPTION] Please try again.")
+            print("[INVALID OPTION]")
 
 
-### CONNECTION
+# CONNECTION
 
 def handshake(client_connection):
     attempts = 0

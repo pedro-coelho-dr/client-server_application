@@ -42,9 +42,10 @@ def receive_ack_nak(client_socket, timeout=2.0):
 def make_pkt(data, sequence_number, last_sequence_number):
     sequence_string = f"{sequence_number:04d}"
     last_seq_string = f"{last_sequence_number:04d}"
-    checksum = sum(bytearray((data + sequence_string + last_seq_string).encode())) % 256
+    padded_data = data.ljust(5)
+    checksum = sum(bytearray((padded_data + sequence_string + last_seq_string).encode())) % 256
     checksum_string = f"{checksum:04d}"
-    return f"{data}{sequence_string}{last_seq_string}{checksum_string}"
+    return f"{padded_data}{sequence_string}{last_seq_string}{checksum_string}"
 
 
 def send(client_socket, data, sequence_number, last_sequence_number):
@@ -55,7 +56,7 @@ def send(client_socket, data, sequence_number, last_sequence_number):
 
 def send_batch(client_socket):
     sequence_number = 1
-    data = input("\nEnter data: ")
+    data = input("\nEnter message: ")
     packets = [data[i:i+5] for i in range(0, len(data), 5)]
     last_sequence_number = len(packets)
     MAX_RETRIES = 3
@@ -66,9 +67,9 @@ def send_batch(client_socket):
 
         while response != "ACK" and retries < MAX_RETRIES:
             if response == "NAK":
-                print(f"[NAK RECEIVED] Resending Packet Sequence: {sequence_number}")
+                print(f"[NAK RECEIVED] Resending Packet Seq: {sequence_number}")
             else:
-                print(f"[RESENDING] Packet Sequence: {sequence_number}, Attempt: {retries+1}")
+                print(f"[RESENDING] Packet Seq: {sequence_number}, Attempt: {retries+1}")
             
             send(client_socket, packet, sequence_number, last_sequence_number)
             _, response = receive_ack_nak(client_socket)
@@ -79,10 +80,39 @@ def send_batch(client_socket):
         sequence_number += 1
 
 
-
 def send_batch_group(client_socket):
-    return
+    sequence_number = 1
+    data = input("\nEnter message: ")
+    packets = [data[i:i+5] for i in range(0, len(data), 5)]
+    last_sequence_number = len(packets)
+    WINDOW_SIZE = 5
+    MAX_RETRIES = 3
 
+    for i in range(0, len(packets), WINDOW_SIZE):
+        window_packets = packets[i:i+WINDOW_SIZE]
+        last_in_window = min(i+WINDOW_SIZE, last_sequence_number)
+        retries = 0
+        while retries < MAX_RETRIES:
+            for j, packet in enumerate(window_packets, start=i+1):
+                send(client_socket, packet, j, last_sequence_number)
+            
+            seqnum, response = receive_ack_nak(client_socket)
+            
+            if response == "ACK" and seqnum == last_in_window:
+                print("[GROUP ACK RECEIVED]")
+                break
+            elif response == "NAK":
+                print(f"[NAK RECEIVED] Resending Group, Seq: {i+1}")
+            elif response == "NO RESPONSE":
+                print(f"[TIMEOUT] Resending Group, Seq: {i+1}")
+            
+            retries += 1
+
+        if retries == MAX_RETRIES and response != "ACK":
+            print("[ERROR] Maximum retries")
+            break
+        
+        sequence_number += WINDOW_SIZE
 
 ## INTERFACE
 
@@ -94,20 +124,20 @@ def interface(client_socket):
     """
     while True:
         print(menu)
-        choice = input("Choose an option:\n>>> ")
+        choice = input("Choose option:\n>>> ")
         if choice == '1':
             send_batch(client_socket)
         if choice == '2':
             send_batch_group(client_socket)
-        elif choice == '':
+        elif choice == '3':
             print("[EXITING] Closing connection...")
             client_socket.close()
             break
         else:
-            print("[INVALID OPTION] Please try again.")
+            print("[INVALID OPTION]")
 
 
-#### CONNECTIONG
+# CONNECTIONG
 
 def handshake(client_socket):
     attempts = 0
