@@ -32,7 +32,7 @@ def receive_ack_nak(client_socket, timeout=2.0):
             else:
                 print("[ERROR] Invalid checksum.")
     except socket.timeout:
-        print("[TIMEOUT] No ACK or NAK")
+        print("\n[TIMEOUT] No ACK or NAK")
     finally:
         client_socket.settimeout(None)
     return None, "NO RESPONSE"
@@ -91,7 +91,7 @@ def send_batch(client_socket, corrupt=False, drop=False):
         sequence_number += 1
 
 
-def send_batch_group(client_socket):
+def send_batch_group(client_socket,corrupt=False, drop=False):
     sequence_number = 1
     data = input("\nEnter message: ")
     packets = [data[i:i+5] for i in range(0, len(data), 5)]
@@ -104,8 +104,17 @@ def send_batch_group(client_socket):
         last_in_window = min(i+WINDOW_SIZE, last_sequence_number)
         retries = 0
         while retries < MAX_RETRIES:
+            """ for j, packet in enumerate(window_packets, start=i+1):
+                send(client_socket, packet, j, last_sequence_number) """
+
             for j, packet in enumerate(window_packets, start=i+1):
-                send(client_socket, packet, j, last_sequence_number)
+                if drop and j == i+1:
+                    print(f"[DROP] Packet Seq: {j} (dropped intentionally)")
+                    continue
+                elif corrupt and j == i+1 and retries == 0:
+                    send(client_socket, packet, j, last_sequence_number, corrupt=True)
+                else:
+                    send(client_socket, packet, j, last_sequence_number)
             
             seqnum, response = receive_ack_nak(client_socket)
             
@@ -115,7 +124,7 @@ def send_batch_group(client_socket):
             elif response == "NAK":
                 print(f"[NAK RECEIVED] Resending Group, Seq: {i+1}")
             elif response == "NO RESPONSE":
-                print(f"[TIMEOUT] Resending Group, Seq: {i+1}")
+                print(f"\n[TIMEOUT] Resending Group, Seq: {i+1}")
             
             retries += 1
 
@@ -129,25 +138,33 @@ def send_batch_group(client_socket):
 
 def interface(client_socket):
     menu = """
-1) Send batch (individual confirmation)
-2) Send batch (group confirmation)
-3) Simulate a corrupted package (individual)
-4) Simulate a dropped package (individual)
-5) Exit
+[1] Send batch (individual confirmation)
+[2] Send batch (group confirmation)
+
+[3] Simulate a corrupted packet (individual)
+[4] Simulate a dropped packet (individual)
+
+[5] Simulate a corrupted packet (group)
+[6] Simulate a dropped packet (group)
+
+[7] Exit
     """
     while True:
         print(menu)
         choice = input("Choose option:\n>>> ")
-        if choice == '1':
+        if choice == '1': #individual
             send_batch(client_socket)
-        if choice == '2':
+        if choice == '2': #group
             send_batch_group(client_socket)
-        if choice == '3':
-            send_batch(client_socket,True,False)
-        if choice == '4':
-            #DROP
-            send_batch(client_socket,False,True)
-        elif choice == '5':
+        if choice == '3': #corrupt
+            send_batch(client_socket,corrupt=True)
+        if choice == '4': #drop
+            send_batch(client_socket,drop=True)
+        if choice == '5': #corrupt
+            send_batch_group(client_socket,corrupt=True)
+        if choice == '6': #drop
+            send_batch_group(client_socket,drop=True)
+        elif choice == '7':
             print("[EXITING] Closing connection...")
             client_socket.close()
             break
