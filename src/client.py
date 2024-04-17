@@ -103,13 +103,15 @@ def send_batch_group(client_socket,corrupt=False, drop=False):
         window_packets = packets[i:i+WINDOW_SIZE]
         last_in_window = min(i+WINDOW_SIZE, last_sequence_number)
         retries = 0
+        drop_occurred = False
         while retries < MAX_RETRIES:
             """ for j, packet in enumerate(window_packets, start=i+1):
                 send(client_socket, packet, j, last_sequence_number) """
 
             for j, packet in enumerate(window_packets, start=i+1):
-                if drop and j == i+1:
+                if drop and not drop_occurred and j == i+1:
                     print(f"[DROP] Packet Seq: {j} (dropped intentionally)")
+                    drop_occurred = True
                     continue
                 elif corrupt and j == i+1 and retries == 0:
                     send(client_socket, packet, j, last_sequence_number, corrupt=True)

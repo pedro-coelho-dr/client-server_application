@@ -63,6 +63,8 @@ def listening_group(client_connection):
         buffer = ""
         packets_to_ack = []
         temp_message = {}
+        WINDOW_SIZE = 5
+        expected_seqnum = 1
         
 
         while True:
@@ -81,6 +83,14 @@ def listening_group(client_connection):
                 except ValueError as e:
                     print(f"[EXCEPTION] {str(e)}")
                     continue
+                if seqnum != expected_seqnum:
+                        send_ack_nak(client_connection, "NAK", expected_seqnum)
+                        print(f"[ERROR] PACKET LOSS. NAK sent.")
+                        temp_message.clear()
+                        packets_to_ack = []
+                        expected_seqnum = (expected_seqnum - 1) // WINDOW_SIZE * WINDOW_SIZE + 1
+                        continue
+                expected_seqnum += 1
              # CHECKSUM
                 print(f"[RECEIVED] Data: '{data}', Last: {last_seqnum}, Seq: {seqnum}")
                 if verify_checksum(data, seqnum, last_seqnum, rcv_checksum):
@@ -91,10 +101,6 @@ def listening_group(client_connection):
                     print(f"[ERROR] Checksum Seq: {seqnum}. NAK.")
             # PONTO DE DECISÃO
                 if len(packets_to_ack) == 5 or seqnum == last_seqnum:
-                    #if len(packets_to_ack) < 5 and seqnum != last_seqnum:
-                    #    send_ack_nak(client_connection, "NAK", packets_to_ack[0][0])
-                    #    print("[PACKTE LOSS] GROUP NAK SENT")
-                    #    temp_message.clear()
 
                     if all(ack for _, ack in packets_to_ack):
                         send_ack_nak(client_connection, "ACK", packets_to_ack[-1][0])
@@ -105,14 +111,14 @@ def listening_group(client_connection):
                         if seqnum == last_seqnum:
                             print(f"\n[FULL MESSAGE] {full_message}")
                             full_message = ""
+                            expected_seqnum = 1
                     else:
                         send_ack_nak(client_connection, "NAK", packets_to_ack[0][0])
                         print("[GROUP NAK SENT]")
                         temp_message.clear()
+                        expected_seqnum = (packets_to_ack[0][0] - 1) // WINDOW_SIZE * WINDOW_SIZE + 1
                     packets_to_ack = []
-                    
-                    
-                    
+
     except Exception as e:
         print(f"[EXCEPTION] {str(e)}")
 
