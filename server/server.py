@@ -44,12 +44,14 @@ def listening(client_connection):
                 else:
                     send_ack_nak(client_connection, "NAK", seqnum)
                     print(f"[ERROR] Checksum Seq: {seqnum}. NAK sent.")
-                if seqnum == last_seqnum:
-                    print(f"[FULL MESSAGE] {full_message}")
-                    full_message= ""
+                
             else:
                 print("[DISCONNECTED] Client disconnected.")
                 return
+            if seqnum == last_seqnum:
+                print(f"[FULL MESSAGE] {full_message}")
+                full_message= ""
+        
     except Exception as e:
         print(f"[EXCEPTION] {str(e)}")
 

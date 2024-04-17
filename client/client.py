@@ -67,9 +67,8 @@ def send_batch(client_socket, corrupt=False, drop=False):
         # SIMULATE STATE
         if(drop):
             #DROP
-            send(client_socket, packet, sequence_number, last_sequence_number,corrupt)
-            response = "TEST"
-        if(corrupt):
+            _, response = receive_ack_nak(client_socket)
+        elif(corrupt):
             send(client_socket, packet, sequence_number, last_sequence_number,corrupt)
             _, response = receive_ack_nak(client_socket)
         # NORMAL STATE
@@ -90,9 +89,6 @@ def send_batch(client_socket, corrupt=False, drop=False):
         if retries == MAX_RETRIES and response != "ACK":
             print(f"[ERROR] Maximum resend: {sequence_number}.")
         sequence_number += 1
-        
-        if response == "TEST":
-            print(f"TESTE resived: {sequence_number}.")
 
 
 def send_batch_group(client_socket):
@@ -136,7 +132,7 @@ def interface(client_socket):
 1) Send batch (individual confirmation)
 2) Send batch (group confirmation)
 3) Simulate a corrupted package
-4) Simulete a droped packge
+4) Simulate a dropped package
 5) Exit
     """
     while True:
