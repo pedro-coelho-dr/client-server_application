@@ -84,12 +84,13 @@ def listening_group(client_connection):
                     print(f"[EXCEPTION] {str(e)}")
                     continue
                 if seqnum != expected_seqnum:
-                        send_ack_nak(client_connection, "NAK", expected_seqnum)
                         print(f"[ERROR] PACKET LOSS. NAK sent.")
+                        send_ack_nak(client_connection, "NAK", expected_seqnum)
                         temp_message.clear()
                         packets_to_ack = []
                         expected_seqnum = (expected_seqnum - 1) // WINDOW_SIZE * WINDOW_SIZE + 1
-                        continue
+                        buffer = ""
+                        break
                 expected_seqnum += 1
              # CHECKSUM
                 print(f"[RECEIVED] Data: '{data}', Last: {last_seqnum}, Seq: {seqnum}")
@@ -118,6 +119,7 @@ def listening_group(client_connection):
                         temp_message.clear()
                         expected_seqnum = (packets_to_ack[0][0] - 1) // WINDOW_SIZE * WINDOW_SIZE + 1
                     packets_to_ack = []
+
 
     except Exception as e:
         print(f"[EXCEPTION] {str(e)}")
