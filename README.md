@@ -19,7 +19,7 @@ aplicação, fornecer um transporte confiável de dados considerando um canal co
 perdas de dados e erros.
 
 
-## Como executar:
+## Como executar
 
 - No diretório 'src'
 
@@ -27,11 +27,11 @@ perdas de dados e erros.
   python server.py
   python client.py
   ```
-## Descrição:
+## Descrição
 
 ![arq2](https://github.com/DiogoHMC/InfraDeComunicacao/assets/111138996/58c568b5-1453-4dfd-b4b5-cb646bd34da9)
 
-## Client
+## Cliente
 
 ### connection(server_host, server_port)
 Estabelece a conexão com o servidor e inicia a interface após um handshake bem-sucedido.
@@ -64,7 +64,7 @@ Calcula o checksum dos dados e do número de sequência e verifica se é igual a
 Recebe um pacote e extrai os dados, o número de sequência e o checksum recebido.
 
 
-## Server
+## Servidor
 
 ### start_server(host, port)
 Inicia o servidor, aguarda conexões e processa os handshakes.
@@ -72,25 +72,25 @@ Inicia o servidor, aguarda conexões e processa os handshakes.
 ### handshake(client_connection)
 Realiza o handshake do lado do servidor.
 
-## server_interface(client_connection)
+### server_interface(client_connection)
 Fornece uma interface para o servidor escolher entre confirmação individual ou em grupo.
 
-## listening(client_connection)
+### listening(client_connection)
 Escuta pacotes individuais e envia confirmações individuais.
 
-## listening_group(client_connection)
+### listening_group(client_connection)
 Escuta pacotes em uma janela deslizante e envia confirmações em grupo.
 
 ### send_ack_nak(client_connection, ack_nak, sequence_number)
 Envia um ACK ou NAK como resposta para o cliente.
 
-## make_pkt(data, sequence_number)
+### make_pkt(data, sequence_number)
 Cria um pacote com os dados, número de sequência, um checksum.
 
-## parse_pkt(packet)
+### parse_pkt(packet)
 Analisa um pacote recebido para extrair os dados, números de sequência e checksum.
 
-## verify_checksum(data, sequence_number, last_sequence_number, rcv_checksum)
+### verify_checksum(data, sequence_number, last_sequence_number, rcv_checksum)
 Verifica o checksum de um pacote recebido.
 
 
