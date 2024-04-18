@@ -1,22 +1,12 @@
 # Aplicação Cliente-Servidor
 
-Infraestrutura de Comunicação
+<b>Cadeira:</b> Infraestrutura de Comunicação - Ciência da Computação<br>
+<b>Faculdade:</b> CESAR School<br>
+<b>Orientador:</b> Petrônio Gomes
 
-Ciência da Computação
+<b>Alunos:</b> Diogo Henrique, Estela de Lacerda, Kaique Alves, Matheus Gomes, Pedro Coelho, Yara Rodrigues
 
-Cesar School
-
-Prof.: Petrônio Gomes
-
-Alunos:
-	Diogo
- 	Estela
- 	Kaique Alves
- 	Matheus Gomes
- 	Pedro Coelho
- 	Yara
-  
-Objetivo geral: Desenvolver uma aplicação cliente-servidor capaz de, na camada de
+<b>Objetivo geral:</b> Desenvolver uma aplicação cliente-servidor capaz de, na camada de
 aplicação, fornecer um transporte confiável de dados considerando um canal com
 perdas de dados e erros.
 
