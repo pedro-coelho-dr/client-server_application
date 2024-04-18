@@ -196,12 +196,12 @@ def start_server(host='localhost', port=65432):
                     print("[HANDSHAKE FAILED] Connection closed.")
                     client_connection.close()
     except KeyboardInterrupt:
-        print("[SERVER] Server shutting down.")
+        print("[SERVER] Server closing...")
     except Exception as e:
-        print(f"[ERROR] An unexpected error occurred: {e}")
+        print(f"[ERROR] A {e}")
     finally:
         server_socket.close()
-        print("[SERVER] Socket closed.")
+        print("[SERVER] Socket closed")
 
 if __name__ == "__main__":
     start_server()
