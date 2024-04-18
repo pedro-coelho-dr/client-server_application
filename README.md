@@ -21,12 +21,26 @@ perdas de dados e erros.
 
 ## Como executar
 
-- No diretório 'src'
-
+### Inicializar
+No diretório 'src'
+1. Inicie o servidor:
   ```
   python server.py
+  ```
+2. Em seguida, o cliente:
+  ```
   python client.py
   ```
+3. Escolha a configuração 'confirmação individual de pacotes' OU 'confirmação de pacotes em grupo' no servidor
+4. Escolha a opção apropriada no menu do cliente.
+
+### Encerrar
+
+1. Desconecte o cliente com 'ctrl+c' ou na interface da aplicação.<br>>
+2. Desconecte o servidor com 'ctrl+c'.<br><br>
+
+Obs.: Para alterar a configuração do servidor é necessário encerrar e reiniciar cliente e servidor seguindo os passos acima.
+
 ## Descrição
 
 ![arq2](https://github.com/DiogoHMC/InfraDeComunicacao/assets/111138996/58c568b5-1453-4dfd-b4b5-cb646bd34da9)
