@@ -159,3 +159,10 @@ verify_checksum(data, sequence_number, rcv_checksum):
 
 Esta função verifica se o checksum recebido corresponde ao esperado para garantir a integridade dos dados.
 O checksum é recalculado com base nos dados e número de sequência recebidos e comparado com o checksum recebido do cliente.
+
+
+# Colaboradores
+
+| [<img loading="lazy" src="https://avatars.githubusercontent.com/u/111138996?v=4" width=115><br><sub>Pedro Coelho</sub>](https://github.com/Dricalucia) |  [<img loading="lazy" src="https://avatars.githubusercontent.com/u/103130662?v=4" width=115><br><sub>Yara Rodrigues</sub>](https://github.com/Yara-R) | [<img loading="lazy" src="https://avatars.githubusercontent.com/u/117921412?v=4" width=115><br><sub>Estela Lacerda</sub>](https://github.com/Yara-R) | [<img loading="lazy" src="https://avatars.githubusercontent.com/u/116087739?v=4" width=115><br><sub>Diogo Henrique</sub>](https://github.com/Yara-R) | [<img loading="lazy" src="https://avatars.githubusercontent.com/u/117746778?v=4" width=115><br><sub>Matheus Gomes</sub>](https://github.com/Yara-R) |  [<img loading="lazy" src="https://avatars.githubusercontent.com/u/116605416?v=4" width=115><br><sub>Kaique Alves</sub>](https://github.com/Yara-R) |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+
