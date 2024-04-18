@@ -10,10 +10,9 @@
 
 # Aplicação Cliente-Servidor
 
-Infraestrutura de Comunicação<br>
-Ciência da Computação<br>
-CESAR School<br>
-Orientador: Petrônio Gomes
+Trabalho de Infraestrutura de Comunicação<br>
+Orientador: Petrônio Gomes <br>
+Ciência da Computação - CESAR School<br>
 
 <b>Objetivo geral:</b> Desenvolver uma aplicação cliente-servidor capaz de, na camada de
 aplicação, fornecer um transporte confiável de dados considerando um canal com
