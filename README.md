@@ -19,134 +19,133 @@ perdas de dados e erros.
   python server.py
   python client.py
   ```
-
 ## Descrição:
 
 ![arq2](https://github.com/DiogoHMC/InfraDeComunicacao/assets/111138996/58c568b5-1453-4dfd-b4b5-cb646bd34da9)
 
-## Cliente
+## Client.py
 
-### connection(server_host, server_port)
-Estabelece a conexão com o servidor e inicia a interface após um handshake bem-sucedido.
+### Funcionamento do client.py:
+### make_pkt(data, sequence_number):
+Essa função cria um pacote que será enviado ao servidor, juntando os dados a serem transmitidos e o número de sequência do pacote.
+Ela também calcula um checksum para garantir que os dados não sejam corrompidos durante a transmissão.
 
-### handshake(client_socket)
-Realiza o handshake inicial com o servidor para estabelecer a conexão. Envia "SYN" e espera por "SYN-ACK".
+### parse_pkt(packet):
+Esta função analisa o pacote recebido do servidor, separando os dados, o número de sequência e o checksum para que possam ser verificados individualmente.
+Ela verifica se o pacote está no formato correto e, em caso afirmativo, extrai as informações essenciais para processamento adicional.
 
-### interface(client_socket)
-Fornece uma interface interativa ao usuário para enviar pacotes individualmente ou em grupo e simular erros de transmissão.
+### verify_checksum(data, sequence_number, rcv_checksum):
+Aqui, verificamos se o checksum recebido do servidor corresponde ao checksum calculado localmente.
+O checksum é uma medida de verificação de integridade que nos ajuda a garantir que os dados não tenham sido alterados durante a transmissão.
 
-### send_batch(client_socket, corrupt, drop)
-Envia uma sequência de mensagens em lotes. Cada mensagem é dividida em pacotes de até 5 caracteres. Permite simular a corrupção e perda de pacotes.
+### isNAK(client_socket, data, sequence_number):
+Esta função é acionada quando o servidor envia um NAK (Negative Acknowledgement), indicando que ocorreu um erro na transmissão do pacote.
+Ela é responsável por lidar com a situação de reenvio do pacote para garantir que os dados sejam entregues corretamente.
 
-### send_batch_group(client_socket, corrupt, drop)
-Envia uma sequência de mensagens usando confirmação em grupo. Utiliza uma janela deslizante e também permite simular corrupção e perda de pacotes.
+### isACK(client_socket, sequence_number):
+Aqui, verificamos se recebemos um ACK (Acknowledgement) do servidor em resposta ao pacote enviado.
+Se recebermos um ACK com o número de sequência esperado, isso indica que o pacote foi entregue com sucesso.
+Se um NAK for recebido ou se não houver resposta do servidor dentro do tempo limite, consideramos que ocorreu um erro na transmissão.
 
-### send(client_socket, data, sequence_number, last_sequence_number, corrupt)
-Envia um pacote de dados pelo socket do cliente. Se corrupt for verdadeiro, o pacote é enviado com um checksum adulterado.
+### send(client_socket, data, sequence_number):
+Essa função é responsável por enviar um pacote ao servidor contendo os dados a serem transmitidos e o número de sequência do pacote.
+Ela utiliza a função make_pkt para criar o pacote e o envia através do socket do cliente.
 
-### make_pkt(data, sequence_number, last_sequence_number, corrupt)
-Cria um pacote com os dados, número de sequência, último número de sequência e um checksum. Se corrupt for verdadeiro, o checksum é adulterado.
+### interface(client_socket):
+Aqui, implementamos a interface interativa do cliente, que permite ao usuário enviar mensagens para o servidor.
+O usuário tem a opção de enviar uma mensagem ou sair do programa, tornando a interação mais amigável e intuitiva.
 
-### receive_ack_nak(client_socket, timeout)
-Aguarda o recebimento de um ACK ou NAK dentro de um tempo limite. Se um pacote for recebido, é verificado e o tipo de resposta é retornado juntamente com o número de sequência.
+### handshake(client_socket):
+O handshake é uma etapa crucial na inicialização da comunicação entre cliente e servidor.
+Nesta função, o cliente envia um SYN (synchronize) ao servidor, aguarda um SYN-ACK em resposta e envia um ACK de confirmação.
+Se o handshake for bem-sucedido, podemos prosseguir com a comunicação; caso contrário, é necessário investigar e corrigir qualquer problema encontrado.
 
-### parse_pkt(packet)
-Recebe um pacote e extrai os dados, o número de sequência e o checksum recebido. Levanta um erro se o pacote tiver tamanho inválido.
-
-### verify_checksum(data, sequence_number, rcv_checksum)
-Calcula o checksum dos dados e do número de sequência e verifica se é igual ao checksum recebido. Retorna verdadeiro se forem iguais.
-
-
-## Servidor
-
-### start_server(host, port)
-Inicia o servidor, aguarda conexões e processa os handshakes.
-
-### handshake(client_connection)
-Realiza o handshake do lado do servidor.
-
-### server_interface(client_connection)
-Fornece uma interface para o servidor escolher entre confirmação individual ou em grupo.
-
-### listening(client_connection)
-Escuta pacotes individuais e envia confirmações individuais.
-
-### listening_group(client_connection)
-Escuta pacotes em uma janela deslizante e envia confirmações em grupo.
-
-### send_ack_nak(client_connection, ack_nak, sequence_number)
-Envia um ACK ou NAK como resposta para o cliente.
-
-### parse_pkt(packet)
-Analisa um pacote recebido para extrair os dados, números de sequência e checksum.
-
-### verify_checksum(data, sequence_number, last_sequence_number, rcv_checksum)
-Verifica o checksum de um pacote recebido.
-
-### make_pkt(data, sequence_number)
-Prepara um pacote com os dados e o número de sequência recebidos, adicionando um checksum para verificação de integridade. É usada para responder ao cliente com um ACK (confirmação) ou NAK (negação) após receber e processar um pacote.
+### connection(server_host='localhost', server_port=65432):
+Esta função é responsável por estabelecer a conexão com o servidor.
+Ela cria um socket e o conecta ao servidor especificado.
+Após a conexão bem-sucedida, o handshake é realizado e, se for bem-sucedido, a interface do cliente é iniciada para interação com o usuário.
 
 
+### Server.py
+Funcionamento do server.py:
 
+### start_server:
+Inicialização do servidor TCP/IP:
 
+Aqui é onde o servidor TCP/IP é iniciado, definindo o host como "localhost" e a porta como "65432".
+Um objeto socket é criado para comunicação TCP usando endereços IPv4.
+Vinculação do endereço e porta:
 
+O socket é vinculado ao endereço do servidor e à porta especificada.
+O servidor é configurado para escutar por conexões de clientes.
+Loop infinito para aceitar conexões:
 
+O código entra em um loop infinito, aguardando e aceitando conexões com clientes.
+Após aceitar uma conexão, o handshake é realizado.
+Se o handshake for bem-sucedido, a interface do servidor é executada; caso contrário, a conexão é fechada.
+handshake:
+### Controle de tentativas:
 
+Variáveis attempts e max_attempts são utilizadas para controlar as tentativas de handshake.
+Recebimento do SYN:
 
+O servidor aguarda a chegada do SYN do cliente. Se recebido, passa para a próxima etapa.
+Envio do SYN-ACK e espera pelo ACK:
 
+O servidor envia SYN-ACK para o cliente e aguarda o recebimento de um ACK em resposta.
+Se o ACK for recebido dentro do tempo limite, o handshake é concluído com sucesso.
+Tratamento de timeouts e falhas:
 
+Se ocorrer um timeout ou se o cliente enviar uma resposta diferente de ACK, o servidor pode tentar novamente até atingir o número máximo de tentativas.
 
-- **start_server:**
-	- Criação do servidor TCP/IP, onde o host é estabelecido como "localhost" e o port como "65432".
-	- Um objeto socket é criado, especificando que foi utilizado o TCP para comunicação, além de estar sendo usando endereços IPv4.
- 	- O socket vincula o endereço do servidor e a porta, além do servidor ser colocado para escutar por envios do cliente.
-  	- O código entra em um loop infinito, onde ele espera e aceita conexões com um cliente.
-  	- A verificação do Handshake é feita, caso sucedida, a interface é executada ou caso falha, a conexão é fechada.
- 
-- **handshake:**
-	- Criação de variáveis de controle "attempts" e "max_attempts".
-	- O servidor decodifica dados recebidos pelo servidor e caso a string recebida for "SYN", a primeira etapa foi sucedida.
- 	- O servidor codifica e envia uma string "SYN-ACK" para o cliente, aguardando receber a resposta "ACK", concluindo a segunda etapa.
-  	- O servidor ao receber de volta a resposta "ACK", o handshake de três vias é concluído e a conexão será feita.
-  	- Caso o servidor espere mais de um segundo ou o cliente enviar uma resposta que não seja "ACK", o handshake é considerado falho.
-  	- Caso falho, ocorre outras tentativas de serem feitas o handshake até ser concluída ou atingir o quantidade de "max_attempts".
+### server_interface:
+Menu interativo:
+Um menu é exibido no terminal do servidor, permitindo que o usuário escolha entre as opções de escutar e aguardar resposta de um único cliente ou múltiplos clientes.
 
-- **server_interface:**
-	- Impressão do menu no terminal do servidor, em loop infinito, que aceitará apenas os inputs indicados:
- 		- 1 - Escutar e esperar resposta de um cliente.
-   		- 2 - Escutar e esperar resposta de multíplos clientes.
+### listening:
+Recepção de pacotes:
 
-- **listening:**
-	- Criação de uma variável de armazenamento da mensagem completa mandada pelo usuário "full_message".
- 	- O servidor aguarda continuamente por pacotes, os decodificando para uma string.
-  	- O servidor apenas irá aguardar por pacotes não vazios e caso receba um vazio, a conexão terminará.
-  	- Uma análise usando parse_pkt é feita no pacote recebido para extrair os componentes essenciais do pacote.
-  	- O verify_checksum é chamado para verificar se a quantidade de dados recebidos corresponde com o pacote.
-  	- Caso a verificação seja bem sucedida, os dados serão adicionados para "full_message" e será enviado um ACK.
-  	- Caso a verificação seja falha, será enviado um NACK para solicitar a retransmissão do pacote.
-  	- Uma verificação do número de sequência do pacote recebido ser igual ao último número de sequência esperado é feita.
-  	- Caso o resultado da verificação anterior for verdadeira, a "full_message" é impressa e resetada para receber uma nova string.
-  	- O except é utilizado para capturar mensagens de erro recebidas e será impressa no terminal.
+O servidor continua aguardando pacotes enviados pelo cliente.
+Os pacotes são decodificados em uma string e verificados quanto à integridade e número de sequência.
+Verificação de checksum:
 
-- **listening_group:**
-	- Criação de uma variável de armazenamento da mensagem completa mandada pelo usuário "full_message".
-  	- Criação de uma variável de armazenamento dos dados até que possam ser processados em pacotes completos "buffer".
-	- Criação de uma lista para armazenar tuplas de informações sobre os pacotes recebidos para posterior confirmação "packets_to_ack".
- 	- O servidor aguarda continuamente por dados do cliente, os decodificando para uma string.
-  	- O servidor apenas irá aguardar por um conjunto de dados não vazios e caso receba um vazio, a conexão terminará e sairá do loop.
-  	- Uma análise é feita no buffer para extrair pacotes de comprimento 17 caracteres, os removendo do buffer.
-	- Uma análise usando parse_pkt é feita no pacote para extrair os componentes essenciais do pacote.
-   	- Caso um erro ocorra na etapa anterior, o except irá capturar o erro e será posteriormente impresso.
-  	- O verify_checksum é chamado para verificar se a quantidade de dados recebidos corresponde com o pacote.
-  	- Caso a verificação seja bem sucedida, o seqnum e um sinal ACK = TRUE serão adicionados para "packets_to_ack".
-  	- Após isso, os dados recebidos pela variável "data" é concatenado para a variável "full_message"
-  	- Caso a verificação seja falha, o seqnum e um sinal NACK = FALSE serão adicionados para "packets_to_ack".
-	- Ocorre a verificação se o número de pacotes enviado é igual ao esperado.
-  	- Ocorre a verificação se o número de sequência do pacote atual é igual ao número de sequência esperado.
-   	- Ocorre a verificação se todos os ACKS recebidos recebeream o valor "TRUE".
-   	- Caso o resultado seja que todos receberam "TRUE", o servidor envia um ACK em grupo para o último pacote recebido e é impresso.
-   	- Caso o resultado seja que ocorreu um NACK, o servidor envia um NACK em grupo para o último pacote recebido e é impresso.
-   	- Após o envio do ACK ou NACK em grupo, o "packets_to_ack" é resetado e a string "full_message" é impressa e resetada.
-   	- O except é utilizado para capturar mensagens de erro recebidas e será impressa no terminal.
+O checksum do pacote recebido é verificado para garantir a integridade dos dados.
+Envio de ACK ou NACK:
 
+Se os dados estiverem íntegros, um ACK é enviado ao cliente. Caso contrário, um NACK é enviado para solicitar a retransmissão do pacote.
+Reconstrução da mensagem:
 
+Os dados recebidos são adicionados à mensagem completa e, se for recebido um pacote com o número de sequência esperado, a mensagem completa é impressa e resetada para receber uma nova string.
+
+### listening_group:
+Recepção de pacotes em grupo:
+
+Este método lida com a recepção de pacotes quando múltiplos clientes estão enviando dados simultaneamente.
+Ele acumula pacotes em um buffer até que possa confirmar a integridade de um grupo de pacotes.
+Envio de ACK ou NACK em grupo:
+
+Após receber um grupo de pacotes, o servidor envia um ACK em grupo se todos os pacotes estiverem íntegros, ou um NACK em grupo se algum pacote estiver corrompido.
+Reconstrução da mensagem completa:
+
+Após o envio do ACK ou NACK em grupo, a mensagem completa é impressa e resetada para receber uma nova string.
+Outras funções:
+
+### make_pkt(data, sequence_number):
+
+Esta função cria um pacote a ser enviado, incluindo os dados e o número de sequência.
+Um checksum é calculado e anexado ao pacote para garantir a integridade dos dados durante a transmissão.
+
+### send_ack_nak(client_connection, is_ack):
+
+Esta função envia um ACK (Acknowledgement) se is_ack for verdadeiro, ou um NAK (Negative Acknowledgement) caso contrário.
+É utilizada para fornecer feedback ao cliente sobre a integridade dos dados recebidos.
+
+### parse_pkt(packet):
+
+Esta função analisa o pacote recebido do cliente e extrai os dados, número de sequência e checksum.
+Os componentes essenciais do pacote são separados para posterior verificação.
+
+verify_checksum(data, sequence_number, rcv_checksum):
+
+Esta função verifica se o checksum recebido corresponde ao esperado para garantir a integridade dos dados.
+O checksum é recalculado com base nos dados e número de sequência recebidos e comparado com o checksum recebido do cliente.
