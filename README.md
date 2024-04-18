@@ -14,8 +14,6 @@
 <b>Faculdade:</b> CESAR School<br>
 <b>Orientador:</b> Petrônio Gomes
 
-<b>Alunos:</b> Diogo Henrique, Estela de Lacerda, Kaique Alves, Matheus Gomes, Pedro Coelho, Yara Rodrigues
-
 <b>Objetivo geral:</b> Desenvolver uma aplicação cliente-servidor capaz de, na camada de
 aplicação, fornecer um transporte confiável de dados considerando um canal com
 perdas de dados e erros.
@@ -76,8 +74,8 @@ Ela cria um socket e o conecta ao servidor especificado.
 Após a conexão bem-sucedida, o handshake é realizado e, se for bem-sucedido, a interface do cliente é iniciada para interação com o usuário.
 
 
-### Server.py
-Funcionamento do server.py:
+## Server.py
+### Funcionamento do server.py:
 
 ### start_server:
 Inicialização do servidor TCP/IP:
@@ -93,8 +91,9 @@ Loop infinito para aceitar conexões:
 O código entra em um loop infinito, aguardando e aceitando conexões com clientes.
 Após aceitar uma conexão, o handshake é realizado.
 Se o handshake for bem-sucedido, a interface do servidor é executada; caso contrário, a conexão é fechada.
-handshake:
-### Controle de tentativas:
+
+### handshake:
+Controle de tentativas:
 
 Variáveis attempts e max_attempts são utilizadas para controlar as tentativas de handshake.
 Recebimento do SYN:
@@ -155,7 +154,7 @@ Esta função envia um ACK (Acknowledgement) se is_ack for verdadeiro, ou um NAK
 Esta função analisa o pacote recebido do cliente e extrai os dados, número de sequência e checksum.
 Os componentes essenciais do pacote são separados para posterior verificação.
 
-verify_checksum(data, sequence_number, rcv_checksum):
+### verify_checksum(data, sequence_number, rcv_checksum):
 
 Esta função verifica se o checksum recebido corresponde ao esperado para garantir a integridade dos dados.
 O checksum é recalculado com base nos dados e número de sequência recebidos e comparado com o checksum recebido do cliente.
