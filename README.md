@@ -1,3 +1,13 @@
+<p align="center">
+  <img alt="Repository size" src="https://img.shields.io/github/repo-size/DiogoHMC/InfraDeComunicacao">
+  <a href="https://github.com/DiogoHMC/InfraDeComunicacao/commits/main/">
+    <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/DiogoHMC/InfraDeComunicacao">
+  </a>
+   <img alt="License" src="https://img.shields.io/github/license/DiogoHMC/InfraDeComunicacao">
+</p>
+
+
+
 # Aplicação Cliente-Servidor
 
 <b>Cadeira:</b> Infraestrutura de Comunicação - Ciência da Computação<br>
