@@ -31,15 +31,15 @@ No diretório 'src'
   ```
   python client.py
   ```
-3. Escolha a configuração 'confirmação individual de pacotes' OU 'confirmação de pacotes em grupo' no servidor
+3. Escolha a configuração "confirmação individual de pacotes" OU "confirmação de pacotes em grupo" no servidor
 4. Escolha a opção apropriada no menu do cliente.
 
 ### Encerrar
 
-1. Desconecte o cliente com 'ctrl+c' ou na interface da aplicação.<br>>
+1. Desconecte o cliente com 'ctrl+c' ou na interface da aplicação.<br>
 2. Desconecte o servidor com 'ctrl+c'.<br><br>
 
-Obs.: Para alterar a configuração do servidor é necessário encerrar e reiniciar cliente e servidor seguindo os passos acima.
+Obs.: Para alterar a configuração do servidor é necessário encerrar e reiniciar cliente.
 
 ## Descrição
 
