@@ -1,37 +1,110 @@
-<p align="center">
+# Aplicação Cliente-Servidor
 
-  <img alt="Repository size" src="https://img.shields.io/github/repo-size/DiogoHMC/InfraDeComunicacao">
+Infraestrutura de Comunicação
 
-  <a href="https://github.com/DiogoHMC/InfraDeComunicacao/commits/main/">
-    <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/DiogoHMC/InfraDeComunicacao">
-  </a>
+Ciência da Computação
 
-   <img alt="License" src="https://img.shields.io/badge/license-MIT-brightgreen">
+Cesar School
 
-</p>
+Prof.: Petrônio Gomes
 
-# InfraDeComunicacao
-
-## Como executar o programa:
-
-- Va para o arquivo Makefile e troque o caminho para que direcione ao aquivo InfraDeComunicacao na sua máquina
-
-  ```bash
-
+Alunos:
+	Diogo
+ 	Estela
+ 	Kaique Alves
+ 	Matheus Gomes
+ 	Pedro Coelho
+ 	Yara
   
-  "cd SeuCaminho/InfraDeComunicacao && python3 server/server.py"
+Objetivo geral: Desenvolver uma aplicação cliente-servidor capaz de, na camada de
+aplicação, fornecer um transporte confiável de dados considerando um canal com
+perdas de dados e erros.
 
-  "cd SeuCaminho/InfraDeComunicacao && python3 client/client.py"
+
+## Como executar:
+
+- No diretório 'src'
 
   ```
-
-- Realize o seguinte comando no terminal
-
-  ```bash
-  make start
+  python server.py
+  python client.py
   ```
 
-## Funcionamento do server.py:
+## Descrição:
+
+![arq2](https://github.com/DiogoHMC/InfraDeComunicacao/assets/111138996/58c568b5-1453-4dfd-b4b5-cb646bd34da9)
+
+## Cliente
+
+### connection(server_host, server_port)
+Estabelece a conexão com o servidor e inicia a interface após um handshake bem-sucedido.
+
+### handshake(client_socket)
+Realiza o handshake inicial com o servidor para estabelecer a conexão. Envia "SYN" e espera por "SYN-ACK".
+
+### interface(client_socket)
+Fornece uma interface interativa ao usuário para enviar pacotes individualmente ou em grupo e simular erros de transmissão.
+
+### send_batch(client_socket, corrupt, drop)
+Envia uma sequência de mensagens em lotes. Cada mensagem é dividida em pacotes de até 5 caracteres. Permite simular a corrupção e perda de pacotes.
+
+### send_batch_group(client_socket, corrupt, drop)
+Envia uma sequência de mensagens usando confirmação em grupo. Utiliza uma janela deslizante e também permite simular corrupção e perda de pacotes.
+
+### send(client_socket, data, sequence_number, last_sequence_number, corrupt)
+Envia um pacote de dados pelo socket do cliente. Se corrupt for verdadeiro, o pacote é enviado com um checksum adulterado.
+
+### make_pkt(data, sequence_number, last_sequence_number, corrupt)
+Cria um pacote com os dados, número de sequência, último número de sequência e um checksum. Se corrupt for verdadeiro, o checksum é adulterado.
+
+### receive_ack_nak(client_socket, timeout)
+Aguarda o recebimento de um ACK ou NAK dentro de um tempo limite. Se um pacote for recebido, é verificado e o tipo de resposta é retornado juntamente com o número de sequência.
+
+### parse_pkt(packet)
+Recebe um pacote e extrai os dados, o número de sequência e o checksum recebido. Levanta um erro se o pacote tiver tamanho inválido.
+
+### verify_checksum(data, sequence_number, rcv_checksum)
+Calcula o checksum dos dados e do número de sequência e verifica se é igual ao checksum recebido. Retorna verdadeiro se forem iguais.
+
+
+## Servidor
+
+### start_server(host, port)
+Inicia o servidor, aguarda conexões e processa os handshakes.
+
+### handshake(client_connection)
+Realiza o handshake do lado do servidor.
+
+### server_interface(client_connection)
+Fornece uma interface para o servidor escolher entre confirmação individual ou em grupo.
+
+### listening(client_connection)
+Escuta pacotes individuais e envia confirmações individuais.
+
+### listening_group(client_connection)
+Escuta pacotes em uma janela deslizante e envia confirmações em grupo.
+
+### send_ack_nak(client_connection, ack_nak, sequence_number)
+Envia um ACK ou NAK como resposta para o cliente.
+
+### parse_pkt(packet)
+Analisa um pacote recebido para extrair os dados, números de sequência e checksum.
+
+### verify_checksum(data, sequence_number, last_sequence_number, rcv_checksum)
+Verifica o checksum de um pacote recebido.
+
+### make_pkt(data, sequence_number)
+Prepara um pacote com os dados e o número de sequência recebidos, adicionando um checksum para verificação de integridade. É usada para responder ao cliente com um ACK (confirmação) ou NAK (negação) após receber e processar um pacote.
+
+
+
+
+
+
+
+
+
+
 
 - **start_server:**
 	- Criação do servidor TCP/IP, onde o host é estabelecido como "localhost" e o port como "65432".
@@ -85,3 +158,5 @@
    	- Caso o resultado seja que ocorreu um NACK, o servidor envia um NACK em grupo para o último pacote recebido e é impresso.
    	- Após o envio do ACK ou NACK em grupo, o "packets_to_ack" é resetado e a string "full_message" é impressa e resetada.
    	- O except é utilizado para capturar mensagens de erro recebidas e será impressa no terminal.
+
+
