@@ -1,12 +1,11 @@
-<p align="center">
-  <img alt="Repository size" src="https://img.shields.io/github/repo-size/DiogoHMC/InfraDeComunicacao">
-  <a href="https://github.com/DiogoHMC/InfraDeComunicacao/commits/main/">
-    <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/DiogoHMC/InfraDeComunicacao">
-  </a>
-   <img alt="License" src="https://img.shields.io/github/license/DiogoHMC/InfraDeComunicacao">
-</p>
 
+# client-server application
 
+Client-server application implemetation with python
+
+Exercise for network / communication infrastructure course.
+
+Part of my learning journey in computer science [cesar.school](https://cesar.school).
 
 # Aplicação Cliente-Servidor
 
