@@ -85,11 +85,11 @@ def listening_group(client_connection):
                     continue
                 if seqnum != expected_seqnum:
                         print(f"[ERROR] PACKET LOSS. NAK sent.")
-                        send_ack_nak(client_connection, "NAK", expected_seqnum)
                         temp_message.clear()
                         packets_to_ack = []
                         expected_seqnum = (expected_seqnum - 1) // WINDOW_SIZE * WINDOW_SIZE + 1
                         buffer = ""
+                        send_ack_nak(client_connection, "NAK", expected_seqnum)
                         break
                 expected_seqnum += 1
              # CHECKSUM
