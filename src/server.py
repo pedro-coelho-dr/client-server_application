@@ -129,19 +129,20 @@ def listening_group(client_connection):
 
 def server_interface(client_connection):
     menu = """
-[1] Individual Confirmation
-[2] Group Confirmation
+[1] Packet Individual Confirmation
+[2] Packet Group Confirmation
     """
     while True:
         print(menu)
         choice = input("Choose an option:\n>>> ")
         if choice == '1':
-            listening(client_connection)
+            if not listening(client_connection):
+                break
         elif choice == '2':
-            listening_group(client_connection)
+            if not listening_group(client_connection):
+                break
         else:
             print("[INVALID OPTION]")
-
 
 # CONNECTION
 
@@ -178,19 +179,29 @@ def handshake(client_connection):
         return False
 
 def start_server(host='localhost', port=65432):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
-        server_socket.bind((host, port))
-        server_socket.listen()
-        print(f"[SERVER] {host}:{port}")
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server_socket.bind((host, port))
+    server_socket.listen()
+    print(f"[SERVER] {host}:{port}")
 
+    try:
         while True:
             client_connection, client_address = server_socket.accept()
+            print(f"[CONNECTED] {client_address}")
             with client_connection:
                 if handshake(client_connection):
-                    print(f"[CONNECTED] {client_address}\n\n")
                     server_interface(client_connection)
                 else:
+                    print("[HANDSHAKE FAILED] Connection closed.")
                     client_connection.close()
+    except KeyboardInterrupt:
+        print("[SERVER] Server closing...")
+    except Exception as e:
+        print(f"[ERROR] A {e}")
+    finally:
+        server_socket.close()
+        print("[SERVER] Socket closed")
 
 if __name__ == "__main__":
     start_server()

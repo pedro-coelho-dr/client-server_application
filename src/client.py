@@ -140,27 +140,30 @@ def send_batch_group(client_socket,corrupt=False, drop=False):
 
 def interface(client_socket):
     menu = """
-[1] Send batch (individual confirmation)
-[2] Send batch (group confirmation)
+[PACKET INDIVIDUAL CONFIRMATION]
+[1] Send batch
+[2] Simulate a corrupted packet
+[3] Simulate a dropped packet
 
-[3] Simulate a corrupted packet (individual)
-[4] Simulate a dropped packet (individual)
 
-[5] Simulate a corrupted packet (group)
-[6] Simulate a dropped packet (group)
+[PACKET GROUP CONFIRMATION]
+[4] Send batch
+[5] Simulate a corrupted packet
+[6] Simulate a dropped packet
 
-[7] Exit
+
+[7] EXIT
     """
     while True:
         print(menu)
         choice = input("Choose option:\n>>> ")
         if choice == '1': #individual
             send_batch(client_socket)
-        if choice == '2': #group
+        if choice == '4': #group
             send_batch_group(client_socket)
-        if choice == '3': #corrupt
+        if choice == '2': #corrupt
             send_batch(client_socket,corrupt=True)
-        if choice == '4': #drop
+        if choice == '3': #drop
             send_batch(client_socket,drop=True)
         if choice == '5': #corrupt
             send_batch_group(client_socket,corrupt=True)
